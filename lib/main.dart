@@ -186,97 +186,9 @@ class AdbForm extends StatelessWidget {
             builder: (context, state) {
               return Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(50, 10, 50, 10),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        OutlinedButton.icon(
-                          icon: const Icon(Icons.search),
-                          style: OutlinedButton.styleFrom(
-                            shape: const LinearBorder(
-                              start: LinearBorderEdge(),
-                              end: LinearBorderEdge(),
-                              top: LinearBorderEdge(),
-                              bottom: LinearBorderEdge(),
-                            ),
-                          ),
-                          onPressed: () async {
-                            await showSearch<Set<PackageInfo>>(
-                              context: context,
-                              delegate: PackageSearchDelegate(
-                                context.read<AdbBloc>(),
-                                context.read<SearchCubit>(),
-                              ),
-                            );
-                          },
-                          label: const Text("search packages"),
-                        ),
-                        Row(
-                          children: [
-                            BlocBuilder<SearchCubit, Set<PackageInfo>>(
-                              builder: (context, state) {
-                                return OutlinedButton.icon(
-                                  icon: const Icon(Icons.delete_forever),
-                                  style: OutlinedButton.styleFrom(
-                                    shape: const LinearBorder(
-                                      start: LinearBorderEdge(),
-                                      end: LinearBorderEdge(),
-                                      top: LinearBorderEdge(),
-                                      bottom: LinearBorderEdge(),
-                                    ),
-                                  ),
-                                  onPressed: () async {
-                                    var adb = context.read<AdbBloc>();
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        content: SingleChildScrollView(
-                                          child: Text(
-                                            state
-                                                .map((e) => e.package)
-                                                .join('\n'),
-                                          ),
-                                        ),
-                                        title: const Text(
-                                            "Confirm Uninstall Action"),
-                                        actions: [
-                                          TextButton.icon(
-                                            icon: const Icon(Icons.delete),
-                                            onPressed: () {
-                                              adb.add(
-                                                AdbEventUninstallPackages(
-                                                    state),
-                                              );
-                                              Navigator.of(context).pop();
-                                            },
-                                            label: const Text("uninstall"),
-                                          ),
-                                          TextButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                            },
-                                            child:
-                                                const Text("don't uninstall"),
-                                          )
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                  label: const Text("uninstall packages"),
-                                );
-                              },
-                            ),
-                            IconButton(
-                              onPressed: () =>
-                                  context.read<SearchCubit>().clear(),
-                              icon: const Icon(Icons.clear_all),
-                              tooltip: "Clear Selected",
-                            )
-                          ],
-                        ),
-                      ],
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.fromLTRB(50, 10, 50, 10),
+                    child: ControlActions(),
                   ),
                   const SizedBox(height: 10),
                   BlocBuilder<SearchCubit, Set<PackageInfo>>(
@@ -309,6 +221,93 @@ class AdbForm extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class ControlActions extends StatelessWidget {
+  const ControlActions({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        OutlinedButton.icon(
+          icon: const Icon(Icons.search),
+          style: OutlinedButton.styleFrom(
+            shape: const LinearBorder(
+              start: LinearBorderEdge(),
+              end: LinearBorderEdge(),
+              top: LinearBorderEdge(),
+              bottom: LinearBorderEdge(),
+            ),
+          ),
+          onPressed: () async {
+            await showSearch<Set<PackageInfo>>(
+              context: context,
+              delegate: PackageSearchDelegate(
+                context.read<AdbBloc>(),
+                context.read<SearchCubit>(),
+              ),
+            );
+          },
+          label: const Text("search packages"),
+        ),
+        Row(
+          children: [
+            BlocBuilder<SearchCubit, Set<PackageInfo>>(
+              builder: (context, state) {
+                return OutlinedButton.icon(
+                  icon: const Icon(Icons.delete_forever),
+                  style: OutlinedButton.styleFrom(
+                    shape: const LinearBorder(
+                      start: LinearBorderEdge(),
+                      end: LinearBorderEdge(),
+                      top: LinearBorderEdge(),
+                      bottom: LinearBorderEdge(),
+                    ),
+                  ),
+                  onPressed: () => showUninstallDialog(context, state),
+                  label: const Text("uninstall packages"),
+                );
+              },
+            ),
+            IconButton(
+              onPressed: () => context.read<SearchCubit>().clear(),
+              icon: const Icon(Icons.clear_all),
+              tooltip: "Clear Selected",
+            )
+          ],
+        ),
+      ],
+    );
+  }
+
+  void showUninstallDialog(BuildContext context, Set<PackageInfo> state) {
+    var adb = context.read<AdbBloc>();
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        content: SingleChildScrollView(
+          child: Text(state.map((e) => e.package).join('\n')),
+        ),
+        title: const Text("Confirm Uninstall Action"),
+        actions: [
+          TextButton.icon(
+            icon: const Icon(Icons.delete),
+            onPressed: () {
+              adb.add(AdbEventUninstallPackages(state));
+              Navigator.of(context).pop();
+            },
+            label: const Text("uninstall"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text("don't uninstall"),
+          )
+        ],
+      ),
     );
   }
 }
