@@ -147,7 +147,7 @@ class ControlPanel extends StatelessWidget {
         children: [
           SizedBox(
             height: MediaQuery.of(context).size.height * .6,
-            child: const AdbForm(),
+            child: MainControlWindow(),
           ),
           const Divider(thickness: 1, color: Colors.black),
           Expanded(
@@ -169,8 +169,8 @@ class ControlPanel extends StatelessWidget {
   }
 }
 
-class AdbForm extends StatelessWidget {
-  const AdbForm({super.key});
+class MainControlWindow extends StatelessWidget {
+  MainControlWindow({super.key});
 
   @override
   Widget build(BuildContext context) {
