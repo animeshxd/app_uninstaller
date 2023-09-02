@@ -40,6 +40,12 @@ class AdbBloc extends Bloc<AdbEvent, AdbState> {
       logger.log("Devices: ");
       result.forEach(logger.log);
     });
+
+    on<AdbEventExecuteCommand>((event, emit) async {
+      if (event.args.first == 'adb') event.args.removeAt(0);
+      var (_, log, status) = await adb.executeWithLog(event.args);
+      emit(AdbExecuteLogResult(log, status != 0));
+    });
   }
 
   FutureOr<void> onListPackagesEvent(event, emit) async {

@@ -23,3 +23,9 @@ final class AdbPackageListResult extends AdbSuccess {
   AdbPackageListResult(this.packages);
 }
 
+final class AdbExecuteLogResult extends AdbSuccess {
+  final String log;
+  final bool hasError;
+
+  AdbExecuteLogResult(this.log, this.hasError);
+}

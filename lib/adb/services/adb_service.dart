@@ -15,7 +15,7 @@ class Adb {
   Future<ProcessResult> execute(List<String> args) async =>
       await Process.run(p.join(path, 'adb'), args);
 
-  Future<(ProcessResult, String, int)> _executeWithLog(
+  Future<(ProcessResult, String, int)> executeWithLog(
       List<String> args) async {
     var process = await execute(args);
     var status = process.exitCode;
@@ -23,7 +23,7 @@ class Adb {
   }
 
   Future<List<String>> getDevices() async {
-    var (_, stdlog, status) = await _executeWithLog(['devices']);
+    var (_, stdlog, status) = await executeWithLog(['devices']);
     var devices = RegExp(r"List of devices attached\n([\s\S]*)")
             .firstMatch(stdlog.trim())
             ?.group(1)
@@ -38,7 +38,7 @@ class Adb {
   }
 
   Future<bool> _executeWithLogAndKillwithStatus(List<String> args) async {
-    var (_, _, status) = await _executeWithLog(args);
+    var (_, _, status) = await executeWithLog(args);
     return status == 0;
   }
 
@@ -86,7 +86,7 @@ class Adb {
     String log = "";
     if (!cached || listPackagedCached.isEmpty) {
       var (_, log, status) =
-          await _executeWithLog(["shell", "pm", "list", "packages", "-f"]);
+          await executeWithLog(["shell", "pm", "list", "packages", "-f"]);
       listPackagedCached = log;
       if (status != 0) return [];
     }

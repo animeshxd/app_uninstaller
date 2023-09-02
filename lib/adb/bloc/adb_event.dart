@@ -30,3 +30,8 @@ final class AdbEventListPackages extends AdbEvent {
 }
 
 final class AdbEventListDevices extends AdbEvent {}
+
+final class AdbEventExecuteCommand extends AdbEvent {
+  final List<String> args;
+  AdbEventExecuteCommand(String args) : args = args.split(' ');
+}

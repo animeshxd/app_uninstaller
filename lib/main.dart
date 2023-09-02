@@ -157,28 +157,69 @@ class ControlPanel extends StatelessWidget {
           )
         ],
       ),
-      floatingActionButton: BlocBuilder<SearchCubit, Set<PackageInfo>>(
-        builder: (context, state) {
-          return FloatingActionButton(
-            onPressed: () => context.read<AdbBloc>().add(AdbEventListDevices()),
-            child: const Icon(Icons.phone_android),
-          );
-        },
-      ),
     );
   }
 }
 
 class MainControlWindow extends StatelessWidget {
   MainControlWindow({super.key});
-
+  final _textController = TextEditingController(text: "adb devices");
   @override
   Widget build(BuildContext context) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        SizedBox(width: MediaQuery.of(context).size.width * .5),
+        SizedBox(
+          width: MediaQuery.of(context).size.width * .5,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: MediaQuery.of(context).size.width * .4,
+                    child: TextField(
+                      autofocus: true,
+                      controller: _textController,
+                      onSubmitted: (value) =>
+                          onExecuteArgsSubmitted(context, value),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: "execute",
+                    onPressed: () => onExecuteArgsSubmitted(
+                      context,
+                      _textController.text.trim(),
+                    ),
+                    icon: const Icon(Icons.send_time_extension),
+                  )
+                ],
+              ),
+              SizedBox(
+                height: MediaQuery.of(context).size.height * .4,
+                child: SingleChildScrollView(
+                  child: BlocBuilder<AdbBloc, AdbState>(
+                    buildWhen: (previous, current) =>
+                        current is AdbExecuteLogResult,
+                    builder: (context, state) {
+                      if (state is AdbExecuteLogResult) {
+                        return SelectableText(
+                          state.log,
+                          style: state.hasError
+                              ? const TextStyle(color: Colors.red)
+                              : null,
+                        );
+                      }
+                      return Container();
+                    },
+                  ),
+                ),
+              )
+            ],
+          ),
+        ),
         const VerticalDivider(thickness: 1),
         SizedBox(
           width: MediaQuery.of(context).size.width * .47,
@@ -222,6 +263,22 @@ class MainControlWindow extends StatelessWidget {
         ),
       ],
     );
+  }
+
+  void onExecuteArgsSubmitted(BuildContext context, String value) {
+    var args = value.trim();
+    if (args.isEmpty) return;
+    if (args == "shell" || args == "adb shell") {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("adb shell stdin is not supported"),
+          ),
+        );
+        return;
+      }
+    }
+    context.read<AdbBloc>().add(AdbEventExecuteCommand(args));
   }
 }
 
