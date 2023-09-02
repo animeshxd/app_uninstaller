@@ -1,7 +1,10 @@
-import 'dart:convert';
+import 'dart:async';
 import 'dart:io';
-import 'package:app_uninstaller/log/cubit/log_messages_cubit.dart';
+
+import 'package:equatable/equatable.dart';
 import 'package:path/path.dart' as p;
+
+import '../../log/cubit/log_messages_cubit.dart';
 
 class Adb {
   final String path;
@@ -9,30 +12,33 @@ class Adb {
 
   Adb({required this.path, required this.logMessagesCubit});
 
-  Future<Process> execute(List<String> args) async =>
-      await Process.start(p.join(path, 'adb'), args);
+  Future<ProcessResult> execute(List<String> args) async =>
+      await Process.run(p.join(path, 'adb'), args);
 
-  Future<(Process, String, int)> _executeWithLog(List<String> args) async {
+  Future<(ProcessResult, String, int)> _executeWithLog(
+      List<String> args) async {
     var process = await execute(args);
-    var status = await process.exitCode;
-    Stream<List<int>> stdallout = status == 0 ? process.stdout : process.stderr;
-    var log =
-        utf8.decode(await stdallout.where((event) => event.isNotEmpty).first);
-    logMessagesCubit.log(log);
-    return (process, log, status);
+    var status = process.exitCode;
+    return (process, '${process.stderr}${process.stdout}', status);
   }
 
   Future<List<String>> getDevices() async {
-    var (process, stdlog, status) = await _executeWithLog(['devices']);
-    var devices = stdlog.trim().split('\n').sublist(1);
-    process.kill();
+    var (_, stdlog, status) = await _executeWithLog(['devices']);
+    var devices = RegExp(r"List of devices attached\n([\s\S]*)")
+            .firstMatch(stdlog.trim())
+            ?.group(1)
+            ?.trim()
+            .split('\n') ??
+        [];
+
     if (status == 1) return [];
-    return devices.map((e) => e.replaceAll('device', '').trim()).toList();
+
+    var result = devices.map((e) => e.split(RegExp(r'\s'))[0]).toList();
+    return result;
   }
 
   Future<bool> _executeWithLogAndKillwithStatus(List<String> args) async {
-    var (process, _, status) = await _executeWithLog(args);
-    process.kill();
+    var (_, _, status) = await _executeWithLog(args);
     return status == 0;
   }
 
@@ -60,6 +66,7 @@ class Adb {
     var args = ["shell", "pm", "uninstall"];
     if (keep) args.add("-k");
     if (user != -1) args.addAll(['--user', user.toString()]);
+    args.add(packageName);
     return await _executeWithLogAndKillwithStatus(args);
   }
 
@@ -69,19 +76,44 @@ class Adb {
   }) async {
     var args = ['shell', 'pm', 'disable-user'];
     if (user != -1) args.addAll(['--user', user.toString()]);
+    args.add(packageName);
     return await _executeWithLogAndKillwithStatus(args);
   }
 
-  Future<void> listPackages() async {
-    await _executeWithLogAndKillwithStatus(
-      ["shell", "pm", "list", "packages", "-f"],
-    );
+  String listPackagedCached = "";
+  Future<List<PackageInfo>> listPackages(
+      {bool cached = false, String? search}) async {
+    String log = "";
+    if (!cached || listPackagedCached.isEmpty) {
+      var (_, log, status) =
+          await _executeWithLog(["shell", "pm", "list", "packages", "-f"]);
+      listPackagedCached = log;
+      if (status != 0) return [];
+    }
+    log = listPackagedCached;
+
+    var packages = (search == null)
+        ? log.trim().split('\n')
+        : RegExp(
+            'package:.*$search(\$|.*)\n',
+            caseSensitive: false,
+            multiLine: true,
+          ).allMatches(log).map((e) => e.group(0) ?? '');
+    return packages
+        .map((e) => e.trim())
+        .where((element) => element.isNotEmpty)
+        .map((e) => e.split('.apk='))
+        .map((e) => PackageInfo('${e[0]}.apk', e[1]))
+        .toList();
   }
 }
 
-class PackageInfo {
+class PackageInfo extends Equatable {
   final String path;
   final String package;
 
-  PackageInfo(this.path, this.package);
+  const PackageInfo(this.path, this.package);
+
+  @override
+  List<Object> get props => [path, package];
 }
