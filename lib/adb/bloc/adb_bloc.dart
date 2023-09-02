@@ -33,7 +33,7 @@ class AdbBloc extends Bloc<AdbEvent, AdbState> {
       }
     });
 
-    on<AdbEventUninstallPackages>(onUninstallPAckagesEvent);
+    on<AdbEventUninstallPackages>(onUninstallPackagesEvent);
     on<AdbEventListPackages>(onListPackagesEvent);
     on<AdbEventListDevices>((event, emit) async {
       var result = await adb.getDevices();
@@ -49,7 +49,7 @@ class AdbBloc extends Bloc<AdbEvent, AdbState> {
     emit(AdbPackageListResult(result.toSet()));
   }
 
-  FutureOr<void> onUninstallPAckagesEvent(event, emit) async {
+  FutureOr<void> onUninstallPackagesEvent(event, emit) async {
     for (var element in event.packages) {
       var status1 = await adb.uninstallPackage(element.package);
       var status2 = await adb.uninstallPackage(element.package, user: 0);
