@@ -56,14 +56,16 @@ class AdbBloc extends Bloc<AdbEvent, AdbState> {
   }
 
   FutureOr<void> onUninstallPackagesEvent(event, emit) async {
-    for (var element in event.packages) {
-      var status1 = await adb.uninstallPackage(element.package);
-      var status2 = await adb.uninstallPackage(element.package, user: 0);
-      var status3 = await adb.disablePackage(element.package);
+    var packages = event.packages.map((e) => e.package);
+    logger.log('uninstalling ${packages.join(',')}');
+    for (var package in packages) {
+      var status1 = await adb.uninstallPackage(package);
+      var status2 = await adb.uninstallPackage(package, user: 0);
+      var status3 = await adb.disablePackage(package);
       if (status1 || status2 || status3) {
-        logger.log("Uninstall Success: ${element.package}");
+        logger.log("Uninstall Success: $package");
       } else {
-        logger.log("uninstalled failed: ${element.package}");
+        logger.log("uninstalled failed: $package");
       }
     }
   }
