@@ -68,5 +68,6 @@ class AdbBloc extends Bloc<AdbEvent, AdbState> {
         logger.log("uninstalled failed: $package");
       }
     }
+    logger.log('Transaction completed');
   }
 }
