@@ -23,7 +23,7 @@ class PackageSearchDelegate extends SearchDelegate<Set<PackageInfo>> {
           icon: const Icon(Icons.restart_alt),
           label: const Text("reload packages"),
         ),
-      )
+      ),
     ];
   }
 
@@ -40,7 +40,7 @@ class PackageSearchDelegate extends SearchDelegate<Set<PackageInfo>> {
 
   @override
   Widget buildResults(BuildContext context) {
-    var search = query.isNotEmpty ? query : null;
+    final search = query.isNotEmpty ? query : null;
 
     bloc.add(AdbEventListPackages(false, search));
 
@@ -49,16 +49,16 @@ class PackageSearchDelegate extends SearchDelegate<Set<PackageInfo>> {
       buildWhen: (previous, current) => current is AdbPackageListResult,
       builder: (context, state) {
         state as AdbPackageListResult;
-        var packages = state.packages.toList();
+        final packages = state.packages.toList();
         return BlocBuilder<SearchCubit, Set<PackageInfo>>(
           bloc: searchCubit,
           builder: (context, state) {
             return ListView.builder(
               itemCount: packages.length,
               itemBuilder: (context, index) {
-                var package = packages[index];
+                final package = packages[index];
 
-                bool checked = state.contains(package);
+                final bool checked = state.contains(package);
 
                 return ListTile(
                   leading: checked
@@ -66,7 +66,7 @@ class PackageSearchDelegate extends SearchDelegate<Set<PackageInfo>> {
                       : const Icon(Icons.check_box_outline_blank),
                   title: Text(package.package),
                   onTap: () {
-                    var func = checked
+                    final func = checked
                         ? searchCubit.removePackage
                         : searchCubit.addPackage;
                     func(package);
@@ -100,9 +100,9 @@ class PackageSearchDelegate extends SearchDelegate<Set<PackageInfo>> {
             return ListView.builder(
               itemCount: packages.length,
               itemBuilder: (context, index) {
-                var package = packages[index];
+                final package = packages[index];
 
-                bool checked = searchstate.contains(packages[index]);
+                final bool checked = searchstate.contains(packages[index]);
 
                 return ListTile(
                   leading: checked
@@ -110,7 +110,7 @@ class PackageSearchDelegate extends SearchDelegate<Set<PackageInfo>> {
                       : const Icon(Icons.check_box_outline_blank),
                   title: Text(package.package),
                   onTap: () {
-                    var func = checked
+                    final func = checked
                         ? searchCubit.removePackage
                         : searchCubit.addPackage;
                     func(package);

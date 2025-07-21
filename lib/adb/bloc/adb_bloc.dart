@@ -16,7 +16,7 @@ class AdbBloc extends Bloc<AdbEvent, AdbState> {
     this.logger,
   ) : super(AdbInitial()) {
     on<AdbEventConnect>((event, emit) async {
-      var status = await adb.connectDevice(event.ipWithPort);
+      final status = await adb.connectDevice(event.ipWithPort);
       if (status) {
         emit(ADbConnectSuccess());
       } else {
@@ -25,7 +25,7 @@ class AdbBloc extends Bloc<AdbEvent, AdbState> {
     });
 
     on<AdbEventPair>((event, emit) async {
-      var status = await adb.pairDevice(event.ipWithPort, event.pin);
+      final status = await adb.pairDevice(event.ipWithPort, event.pin);
       if (status) {
         emit(AdbPairSuccess());
       } else {
@@ -36,32 +36,32 @@ class AdbBloc extends Bloc<AdbEvent, AdbState> {
     on<AdbEventUninstallPackages>(onUninstallPackagesEvent);
     on<AdbEventListPackages>(onListPackagesEvent);
     on<AdbEventListDevices>((event, emit) async {
-      var result = await adb.getDevices();
+      final result = await adb.getAttachedDevices();
       logger.log("Devices: ");
       result.forEach(logger.log);
     });
 
     on<AdbEventExecuteCommand>((event, emit) async {
       if (event.args.first == 'adb') event.args.removeAt(0);
-      var (_, log, status) = await adb.executeWithLog(event.args);
+      final (_, log, status) = await adb.executeWithLog(event.args);
       emit(AdbExecuteLogResult(log, status != 0));
     });
   }
 
   FutureOr<void> onListPackagesEvent(event, emit) async {
-    var result =
+    final result =
         await adb.listPackages(cached: event.cached, search: event.search);
 
     emit(AdbPackageListResult(result.toSet()));
   }
 
   FutureOr<void> onUninstallPackagesEvent(event, emit) async {
-    var packages = event.packages.map((e) => e.package);
+    final packages = event.packages.map((e) => e.package);
     logger.log('uninstalling ${packages.join(',')}');
     for (var package in packages) {
-      var status1 = await adb.uninstallPackage(package);
-      var status2 = await adb.uninstallPackage(package, user: 0);
-      var status3 = await adb.disablePackage(package);
+      final status1 = await adb.uninstallPackage(package);
+      final status2 = await adb.uninstallPackage(package, user: 0);
+      final status3 = await adb.disablePackage(package);
       if (status1 || status2 || status3) {
         logger.log("Uninstall Success: $package");
       } else {
