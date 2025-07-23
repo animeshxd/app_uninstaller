@@ -1,9 +1,11 @@
 import 'dart:async';
+import 'dart:io';
 import 'dart:math';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'adb/bloc/adb_bloc.dart';
@@ -26,7 +28,7 @@ class MainApp extends StatefulWidget {
 
 class _MainAppState extends State<MainApp> {
   final routes = <String, Widget Function(BuildContext)>{
-    "/": (context) => const MainPage(),
+    "/": (context) => const ResolvePlatformTools(),
   };
 
   @override
@@ -40,10 +42,11 @@ class _MainAppState extends State<MainApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       theme: themeData.copyWith(
-        progressIndicatorTheme:
-            themeData.progressIndicatorTheme.copyWith(year2023: false),
+        progressIndicatorTheme: themeData.progressIndicatorTheme.copyWith(
+          year2023: false,
+        ),
       ),
-      home: const NewApp(),
+      home: const ResolvePlatformTools(),
     );
   }
 }
@@ -76,8 +79,10 @@ class _NewAppState extends State<NewApp> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:
-          AppBar(scrolledUnderElevation: 0, forceMaterialTransparency: true),
+      appBar: AppBar(
+        scrolledUnderElevation: 0,
+        forceMaterialTransparency: true,
+      ),
       body: Row(
         children: [
           NavigationRail(
@@ -101,9 +106,7 @@ class _NewAppState extends State<NewApp> {
               ),
             ],
             selectedIndex: selectedIndex,
-            leading: const SizedBox(
-              height: 30,
-            ),
+            leading: const SizedBox(height: 30),
             onDestinationSelected: (value) =>
                 setState(() => selectedIndex = value),
           ),
@@ -200,16 +203,16 @@ class ApplicationList extends StatelessWidget {
                       Text(
                         app.packageName,
                         style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                              fontWeight: FontWeight.w500,
-                              color: colorScheme.onSurface,
-                            ),
+                          fontWeight: FontWeight.w500,
+                          color: colorScheme.onSurface,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         app.packagePath,
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: colorScheme.onSurfaceVariant,
-                            ),
+                          color: colorScheme.onSurfaceVariant,
+                        ),
                         overflow: TextOverflow.ellipsis,
                       ),
                     ],
@@ -339,8 +342,10 @@ class _ApplicationListPageState extends State<ApplicationListPage> {
               hintText: 'Search packages...',
               prefixIcon: Icon(Icons.search, size: 20),
               border: InputBorder.none,
-              contentPadding:
-                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              contentPadding: EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
             ),
           ),
         ),
@@ -361,35 +366,21 @@ class _ApplicationListPageState extends State<ApplicationListPage> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
-                PopupMenuButton<int>(
-                  itemBuilder: (context) => const [
-                    PopupMenuItem(value: 0, child: Text('user 0')),
-                    PopupMenuItem(value: 1, child: Text('user 1')),
-                    PopupMenuItem(value: 2, child: Text('user 2')),
-                  ],
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12.0,
-                      vertical: 4.0,
-                    ),
-                    decoration: BoxDecoration(
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.outlineVariant,
-                      ),
-                      borderRadius: BorderRadius.circular(8.0),
-                    ),
-                    child: const Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text('user 0'),
-                        SizedBox(width: 8),
-                        Icon(Icons.arrow_drop_down),
-                      ],
+                const SizedBox(width: 12),
+                const Spacer(),
+                if (_selected.isNotEmpty) Text("${_selected.length} selected"),
+                if (_selected.isNotEmpty)
+                  Container(
+                    padding: const EdgeInsets.only(right: 30),
+                    child: IconButton(
+                      onPressed: () {
+                        setState(() {
+                          _selected.clear();
+                        });
+                      },
+                      icon: const Icon(Icons.indeterminate_check_box_outlined),
                     ),
                   ),
-                ),
-                
-                const SizedBox(width: 12),
               ],
             ),
           ),
@@ -533,6 +524,7 @@ class _BulkUninstallStatusPageState extends State<BulkUninstallStatusPage> {
     final int total = _logs.length;
 
     String logText = "";
+    final colorScheme = Theme.of(context).colorScheme;
 
     return Padding(
       padding: const EdgeInsets.all(16.0),
@@ -557,19 +549,16 @@ class _BulkUninstallStatusPageState extends State<BulkUninstallStatusPage> {
             },
           ),
           const SizedBox(height: 24),
-          Text(
-            'Logs:',
-            style: Theme.of(context).textTheme.titleMedium,
-          ),
+          Text('Logs:', style: Theme.of(context).textTheme.titleMedium),
           const SizedBox(height: 8),
           Expanded(
             child: Container(
               width: double.infinity,
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                border: Border.all(color: Colors.grey.shade400),
+                border: Border.all(color: colorScheme.outlineVariant),
                 borderRadius: BorderRadius.circular(8),
-                color: Colors.grey.shade100,
+                color: colorScheme.surface,
               ),
               child: SingleChildScrollView(
                 controller: scrollController,
@@ -623,7 +612,11 @@ class DevicesPage extends StatelessWidget {
     final textTheme = Theme.of(context).textTheme;
 
     return Scaffold(
+      backgroundColor: colorScheme.surfaceContainerLowest,
       appBar: AppBar(
+        backgroundColor: colorScheme.surfaceContainerLowest,
+        elevation: 0,
+        scrolledUnderElevation: 0,
         title: const Text('Connected Devices'),
         actions: [
           IconButton(
@@ -642,10 +635,7 @@ class DevicesPage extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
             color: colorScheme.surface,
             child: ListTile(
-              leading: Icon(
-                Icons.phonelink,
-                color: colorScheme.primary,
-              ),
+              leading: Icon(Icons.phonelink, color: colorScheme.primary),
               title: Text(
                 device,
                 style: textTheme.bodyLarge?.copyWith(
@@ -681,96 +671,196 @@ class DevicesPage extends StatelessWidget {
   }
 }
 
-class SelectPlatformTools extends StatefulWidget {
-  const SelectPlatformTools({super.key});
+class ResolvePlatformTools extends StatefulWidget {
+  const ResolvePlatformTools({super.key});
 
   @override
-  State<SelectPlatformTools> createState() => SelectPlatformToolsState();
+  State<ResolvePlatformTools> createState() => ResolvePlatformToolsState();
 }
 
-class SelectPlatformToolsState extends State<SelectPlatformTools> {
-  final Future<SharedPreferences> _prefs = SharedPreferences.getInstance();
+class ResolvePlatformToolsState extends State<ResolvePlatformTools> {
+  @override
+  void initState() {
+    super.initState();
+    init();
+    textEditingController.addListener(listener);
+  }
 
+  void listener() {
+    checkAdbPathState(textEditingController.text);
+  }
+
+  @override
+  void dispose() {
+    textEditingController.removeListener(listener);
+    super.dispose();
+  }
+
+  void init() async {
+    checkAdbPathState(await platformToolsDir ?? "");
+  }
+
+  final _prefs = SharedPreferencesAsync();
   Future<String?> get platformToolsDir async =>
-      (await _prefs).getString("platform-tools");
-  void setPlatformToolsDir(String path) async =>
-      (await _prefs).setString('platform-tools', path);
+      await _prefs.getString("platform-tools");
+  void setPlatformToolsDir(String path) async => await _prefs.setString(
+    'platform-tools',
+    path.replaceAll(RegExp(r"adb$"), ""),
+  );
+
+  void checkAdbPathState([String path = ""]) async {
+    try {
+      final adb = await _tryAdbInPath(path);
+      if (adb == null) return;
+      setState(() {
+        this.adb = adb;
+      });
+      setPlatformToolsDir(path);
+    } on Exception catch (e) {
+      setState(() {
+        adb = const _Adb(version: '??', host: '??', location: '');
+      });
+      print(e);
+    }
+  }
+
+  bool isTrying = false;
+  Future<_Adb?> _tryAdbInPath([String p = ""]) async {
+    await Future.delayed(const Duration(milliseconds: 100));
+    if (isTrying) return null;
+    isTrying = true;
+
+    try {
+      if (p.endsWith("adb")) p = p.replaceAll(RegExp(r"adb$"), "");
+      p = path.join(p, "adb");
+      final process = await Process.run(p, ["version"]);
+      final error = process.exitCode != 0;
+      if (error) {
+        throw Exception(process.stderr);
+      }
+      return _Adb.parse(process.stdout?.toString() ?? '');
+    } finally {
+      isTrying = false;
+    }
+  }
+
+  final textEditingController = TextEditingController(
+    text: "/home/user/.local/opt/android/platform-tools/adb",
+  );
+
+  var adb = const _Adb(version: '??', host: '??', location: '');
 
   @override
   Widget build(BuildContext context) {
-    return FutureBuilder<String?>(
-      future: platformToolsDir,
-      builder: (context, snapshot) => Center(
-        child: OutlinedButton.icon(
-          icon: const Icon(Icons.description),
-          style: OutlinedButton.styleFrom(
-            shape: const LinearBorder(
-              start: LinearBorderEdge(),
-              end: LinearBorderEdge(),
-              top: LinearBorderEdge(),
-              bottom: LinearBorderEdge(),
-            ),
-          ),
-          onPressed: () async {
-            if (!context.mounted) return;
-            final dir = await FilePicker.platform
-                .getDirectoryPath(initialDirectory: snapshot.data);
-            if (dir == null && context.mounted) {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text(
-                    'Please select the directory of adb executable file',
+    return Scaffold(
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  SizedBox(
+                    width: MediaQuery.sizeOf(context).width * 0.6,
+                    child: TextField(
+                      controller: textEditingController,
+                      decoration: InputDecoration(
+                        hintText: '/path/to/adb/executable',
+                        border: const OutlineInputBorder(),
+                        isDense: true,
+                        suffixIcon: IconButton(
+                          icon: const Icon(Icons.folder_open),
+                          onPressed: () async {
+                            final dir = await FilePicker.platform
+                                .getDirectoryPath(
+                                  initialDirectory: await platformToolsDir,
+                                );
+                            checkAdbPathState(dir ?? "");
+                            textEditingController.text =
+                                dir ?? textEditingController.text;
+                          },
+                        ),
+                      ),
+                    ),
                   ),
-                ),
-              );
-              return;
-            }
-            if (dir == null) return;
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.check_sharp),
+                    onPressed: () {},
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
 
-            setPlatformToolsDir(dir);
-
-            if (dir.isEmpty) return;
-            if (context.mounted) {
-              await Navigator.of(context).push(
-                MaterialPageRoute(
-                  builder: (context) => ControlPanelPage(path: dir),
-                ),
-              );
-            }
-          },
-          label: const Text("select adb executable"),
+                children: [
+                  const Icon(Icons.android, size: 16),
+                  const SizedBox(width: 4),
+                  Text('ADB Version: ${adb.version}'),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.computer, size: 16),
+                  const SizedBox(width: 4),
+                  Text('Host: ${adb.host}'),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
   }
 }
 
+class _Adb {
+  final String version;
+  final String host;
+  final String location;
+
+  const _Adb({this.version = '', this.host = '', this.location = ''});
+
+  factory _Adb.parse(String lines) {
+    final adbVersionRegex = RegExp(r'Android Debug Bridge version ([\d\.]+)');
+    // final versionRegex = RegExp(r'Version ([\w\.\-]+)');
+    final installedRegex = RegExp(r'Installed as (.+)');
+    final runningOnRegex = RegExp(r'Running on (.+)');
+    lines = lines.trim();
+    // final versionMatch = versionRegex.firstMatch(lines);
+    final adbVersionMatch = adbVersionRegex.firstMatch(lines);
+    final installedMatch = installedRegex.firstMatch(lines);
+    final runningOnMatch = runningOnRegex.firstMatch(lines);
+
+    return _Adb(
+      version: adbVersionMatch?.group(1) ?? '',
+      host: runningOnMatch?.group(1) ?? '',
+      location: installedMatch?.group(1) ?? '',
+    );
+  }
+
+  @override
+  String toString() =>
+      '_Adb(version: $version, host: $host, location: $location)';
+}
+
 class ControlPanelPage extends StatelessWidget {
   final String path;
-  const ControlPanelPage({
-    super.key,
-    required this.path,
-  });
+  const ControlPanelPage({super.key, required this.path});
 
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (context) => LogMessagesCubit()),
-        BlocProvider(
-          create: (context) => SearchCubit(),
-        ),
+        BlocProvider(create: (context) => SearchCubit()),
       ],
       child: RepositoryProvider(
-        create: (context) => Adb(
-          path: path,
-          logMessagesCubit: context.read<LogMessagesCubit>(),
-        ),
+        create: (context) =>
+            Adb(path: path, logMessagesCubit: context.read<LogMessagesCubit>()),
         child: BlocProvider<AdbBloc>(
-          create: (context) => AdbBloc(
-            context.read<Adb>(),
-            context.read<LogMessagesCubit>(),
-          ),
+          create: (context) =>
+              AdbBloc(context.read<Adb>(), context.read<LogMessagesCubit>()),
           child: const ControlPanel(),
         ),
       ),
@@ -779,9 +869,7 @@ class ControlPanelPage extends StatelessWidget {
 }
 
 class ControlPanel extends StatelessWidget {
-  const ControlPanel({
-    super.key,
-  });
+  const ControlPanel({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -916,9 +1004,7 @@ class MainControlWindow extends StatelessWidget {
     if (args == "shell" || args == "adb shell") {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("adb shell stdin is not supported"),
-          ),
+          const SnackBar(content: Text("adb shell stdin is not supported")),
         );
         return;
       }
